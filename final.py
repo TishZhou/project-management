@@ -22,7 +22,7 @@ st.title("AI Job Assistant")
 # Set up OpenAI proxy client
 client = openai.OpenAI(
     api_key=os.getenv('OPENAI_API_KEY'),
-    base_url=os.getenv('OPENAI_BASE_URL', 'api.ai.it.cornell.edu')
+    base_url=os.getenv('OPENAI_BASE_URL', 'https://api.ai.it.cornell.edu/')
 )
 
 # initialize session state for job search results and selected job
@@ -178,7 +178,7 @@ else:
             documents = [Document(page_content=combined_text)]
             embeddings = OpenAIEmbeddings(
                 openai_api_key=os.getenv('OPENAI_API_KEY'),
-                openai_api_base=os.getenv('OPENAI_BASE_URL', 'api.ai.it.cornell.edu')
+                openai_api_base=os.getenv('OPENAI_BASE_URL', 'https://api.ai.it.cornell.edu/')
             )
             vectorstore = FAISS.from_documents(documents, embeddings)
             retriever = vectorstore.as_retriever(search_type="similarity", search_kwargs={"k": 2})
