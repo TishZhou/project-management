@@ -177,6 +177,7 @@ else:
             # Vectorstore and context setup
             documents = [Document(page_content=combined_text)]
             embeddings = OpenAIEmbeddings(
+                model="openai.text-embedding-3-large",
                 openai_api_key=os.getenv('OPENAI_API_KEY'),
                 openai_api_base=os.getenv('OPENAI_BASE_URL', 'https://api.ai.it.cornell.edu/')
             )
@@ -210,7 +211,7 @@ else:
 
             # Generate response
             messages = {
-                "model": "gpt-3.5-turbo",  # Specify the model
+                "model": "openai.gpt-4o",  # Specify the model
                 "messages": [{"role": "user", "content": f"Question: {question}\n\nContext: {context}"}],
             }
             response = client.chat.completions.create(**messages)
@@ -221,7 +222,7 @@ else:
         else:
             # Direct response without context
             messages = {
-                "model": "gpt-3.5-turbo",
+                "model": "openai.gpt-4o",
                 "messages": [{"role": "user", "content": question}],
             }
             response = client.chat.completions.create(**messages)
