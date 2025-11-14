@@ -3,12 +3,12 @@ import openai
 # from os import environ
 import streamlit as st
 from langchain_core.messages import HumanMessage
-from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter  # <-- FIX 1: Corrected spelling
 from langchain_core.documents import Document
 from langchain_openai import OpenAIEmbeddings
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
+from langchain_core.runnables import RunnablePassthrough  # <-- FIX 2: Corrected 'runnables'
 from PyPDF2 import PdfReader
 from langchain_experimental.text_splitter import SemanticChunker
 from langchain.vectorstores import FAISS
@@ -62,6 +62,10 @@ if st.session_state["selected_job"] is None:
         )
         days_old = st.slider("Posted Within (days)", 1, 30, 7)
         
+        # --- MODIFICATION 1: ADDED CHECKBOX ---
+        sponsor_filter = st.checkbox("Only show jobs mentioning H1B/Sponsorship")
+        # ----------------------------------------
+        
         search_submitted = st.form_submit_button("Search Jobs")
         
         if search_submitted:
@@ -72,6 +76,31 @@ if st.session_state["selected_job"] is None:
                     job_type=job_type,
                     days_old=days_old
                 )
+                
+                # --- MODIFICATION 2: ADDED FILTER LOGIC ---
+                if sponsor_filter and not jobs_df.empty:
+                    with st.spinner("Filtering for H1B/Sponsorship..."):
+                        # Define keywords
+                        sponsor_keywords = ['h1b', 'h-1b', 'visa', 'sponsorship', 'sponsor']
+                        negation_keywords = [
+                            'no h1b', 'not sponsor', 'will not sponsor', 'does not sponsor',
+                            'unable to sponsor', 'no sponsorship', 'sponsorship is not available'
+                        ]
+
+                        # Prepare description column for search
+                        desc_lower = jobs_df['description'].str.lower().fillna('')
+                        
+                        # Create "Positive" Mask (must contain a sponsor keyword)
+                        positive_mask = desc_lower.str.contains('|'.join(sponsor_keywords), na=False)
+                        
+                        # Create "Negative" Mask (must NOT contain a negation keyword)
+                        negative_mask = desc_lower.str.contains('|'.join(negation_keywords), na=False)
+                        
+                        # Apply the final mask: Must be Positive AND NOT Negative
+                        final_mask = positive_mask & ~negative_mask
+                        jobs_df = jobs_df[final_mask]
+                # --- END OF FILTER LOGIC ---
+
                 if not jobs_df.empty:
                     st.session_state["jobs_df"] = jobs_df
                     st.success(f"Found {len(jobs_df)} jobs!")
@@ -216,8 +245,8 @@ else:
             }
             response = client.chat.completions.create(**messages)
 
-            st.chat_message("assistant").write(response['choices'][0]['message']['content'])
-            st.session_state.messages.append({"role": "assistant", "content": response['choices'][0]['message']['content']})
+            st.chat_message("assistant").write(response.choices[0].message.content)
+            st.session_state.messages.append({"role": "assistant", "content": response.choices[0].message.content})
             
         else:
             # Direct response without context
@@ -226,10 +255,5 @@ else:
                 "messages": [{"role": "user", "content": question}],
             }
             response = client.chat.completions.create(**messages)
-            st.chat_message("assistant").write(response['choices'][0]['message']['content'])
-            st.session_state.messages.append({"role": "assistant", "content": response['choices'][0]['message']['content']})
-
-            # response = client([HumanMessage(content=question)])
-            # st.chat_message("assistant").write(response.content)
-            # st.session_state.messages.append({"role": "assistant", "content": response.content})
-
+            st.chat_message("assistant").write(response.choices[0].message.content)
+            st.session_state.messages.append({"role": "assistant", "content": response.choices[0].message.content})
