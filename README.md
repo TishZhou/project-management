@@ -1,4 +1,15 @@
-# INFO-5940-Final Project
-## AI Job Assistant
-### A web application for job searching and resume matching.
-### Leverages RAG to assist users in understanding job requirements and improving resumes.
+# AI Job Assistant
+## Discription
+    A web application for job searching and resume matching. Our most signature function is a H1B sponsor filter for international students.
+## Model Explanation
+### 1. Web Scraper
+
+A Web Scraper is an automated program that can simulate human web browsing behavior to "scrape" (i.e., extract) specific information from one or more websites. In this project (final_with_filter.py), we use the jobspy (line 16) Python library. When a user inputs a "Job Title," "Location," and "Job Type" (lines 71-74) in the search form and clicks "Search," jobspy simultaneously sends requests to LinkedIn, Indeed, Glassdoor, and Google (line 43) to fetch all public job listings that match the criteria. The job description (Description) data gathered by this scraper makes our "smart H1B filter" (lines 93-111) possible, as it can scan this text before displaying results, find jobs mentioning keywords like h1b or visa, and exclude negative keywords like no sponsorship. In short, the scraper is our "data collector," quickly gathering the latest job information from major job sites on the user's behalf.
+
+### 2. Retrieval-Augmented Generation (RAG)
+
+Retrieval-Augmented Generation (RAG) is an advanced Artificial Intelligence (AI) architecture that "augments" the "generation" capabilities of a Large Language Model (LLM, like GPT-4o) by "retrieving" external knowledge. We need RAG because a standard LLM (like GPT) only knows what it learned during its training. It doesn't know you, and it has never seen the resume you just uploaded. In our application, when a user selects a job and uploads a resume (line 191), the RAG system begins to work. First, the system uses PyPDF2 (line 12) or reads a .txt file (lines 210-213) to extract all the text from your resume. Then, the resume text is converted into numerical vectors (i.e., the "mathematical meaning" of the text) by OpenAIEmbeddings (lines 218-222) and stored in a local "vector database" called FAISS (lines 15, 223), which essentially creates a rapidly searchable index of your resume's content for the AI. When you ask a question in the chat box (e.g., "Am I qualified for this job?"), the system first uses a retriever (line 224) to "retrieve" the most relevant sections of your resume from the vector database. Finally, this "augmented" prompt (containing your Question and the resume Context) is sent to the gpt-4o model (line 253). In short, RAG is our "analyst," ensuring that when the AI answers your questions, it does so based on the facts from your resume (retrieval) to provide a precise and personalized answer (generation).
+
+## How to run
+To avoid api key leakage, you may need to type OPENAI_API_KEY="<your-key>" streamlit run final.py in bash
+Here we are using Cornell AI as our base url. You may need to change the setting if necessary.
